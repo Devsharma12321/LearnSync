@@ -20,8 +20,7 @@ const ALLOWED_ORIGINS = [
   'https://learnsync-9nyy.onrender.com',   // Render (self)
   'http://localhost:3000',                  // local dev
   'http://127.0.0.1:3000',
-  // TODO: Replace with your actual Netlify URL after deploy
-  // e.g. 'https://learnsync.netlify.app'
+  'https://learnsyncmadeeasy.netlify.app',  // Netlify frontend
 ];
 // Accept any *.netlify.app subdomain automatically
 app.use((req, res, next) => {
