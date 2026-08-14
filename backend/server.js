@@ -50,16 +50,18 @@ const io = new Server(server, {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(async () => {
+mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 30000,  // 30s to find a server
+  connectTimeoutMS: 30000,          // 30s to establish connection
+  socketTimeoutMS: 45000,           // 45s for operations
+})
+  .then(() => {
     console.log('Connected to MongoDB successfully');
-    // Run the orphaned-room sweep immediately after DB is ready,
-    // then again every 5 minutes. Doing it here (not inside server.listen)
-    // guarantees Mongoose is fully connected before the first query fires.
-    await sweepOrphanedRooms();
-    setInterval(sweepOrphanedRooms, 5 * 60 * 1000);
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1); // Exit so Render restarts the service
+  });
 
 // Global Middlewares
 app.use(express.json({ limit: '200kb' }));
