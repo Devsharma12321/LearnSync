@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whiteboard — LearnSync</title>
+  <meta name="description" content="Collaborative whiteboard to draw, explain, and brainstorm together." />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/whiteboard.css" />
+</head>
+<body>
+<div class="bg-orbs" aria-hidden="true" style="opacity:0.4">
+  <div class="orb orb-1" style="opacity:0.06"></div>
+</div>
+
+<!-- Whiteboard Navbar -->
+<nav class="editor-navbar wb-navbar" role="navigation">
+  <a href="dashboard.html" class="navbar-brand">
+    <div class="logo-icon">⚡</div>
+    <span class="gradient-text">LearnSync</span>
+  </a>
+  <span style="font-size:0.875rem;color:var(--text-muted);font-weight:500">Whiteboard</span>
+
+  <div class="online-users" id="wb-online" style="margin-left:16px">
+    <div class="avatar avatar-sm" style="background:var(--grad-main)" title="You">Y</div>
+  </div>
+
+  <div class="wb-nav-actions">
+    <button class="btn btn-ghost btn-sm" id="wb-undo-btn" title="Undo (Ctrl+Z)">↩ Undo</button>
+    <button class="btn btn-ghost btn-sm" id="wb-redo-btn" title="Redo (Ctrl+Y)">↪ Redo</button>
+    <button class="btn btn-ghost btn-sm" id="wb-clear-btn">🗑 Clear</button>
+    <button class="btn btn-secondary btn-sm" id="wb-export-btn">⬇ Export PNG</button>
+    <a href="editor.html" class="btn btn-ghost btn-sm">💻 Code Room</a>
+  </div>
+</nav>
+
+<!-- Whiteboard Layout -->
+<div class="wb-layout">
+
+  <!-- Tool Panel -->
+  <aside class="wb-tools glass" role="toolbar" aria-label="Drawing tools">
+
+    <div class="tool-group">
+      <div class="tool-label">Tools</div>
+      <button class="tool-btn active" data-tool="pen" id="tool-pen" title="Pen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="eraser" id="tool-eraser" title="Eraser">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16l11-11 8 8-2 7z"/><path d="M6.0001 17.9999 3 15"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="line" id="tool-line" title="Line">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="rect" id="tool-rect" title="Rectangle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="circle" id="tool-circle" title="Circle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="arrow" id="tool-arrow" title="Arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="9 5 19 5 19 15"/></svg>
+      </button>
+      <button class="tool-btn" data-tool="text" id="tool-text" title="Text">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+    </div>
+
+    <div class="tool-group">
+      <div class="tool-label">Colors</div>
+      <div class="color-grid">
+        <button class="color-swatch active" data-color="#f1f5f9" id="col-white" style="background:#f1f5f9" title="White"></button>
+        <button class="color-swatch" data-color="#a78bfa" id="col-purple" style="background:#a78bfa" title="Purple"></button>
+        <button class="color-swatch" data-color="#60a5fa" id="col-blue" style="background:#60a5fa" title="Blue"></button>
+        <button class="color-swatch" data-color="#34d399" id="col-green" style="background:#34d399" title="Green"></button>
+        <button class="color-swatch" data-color="#fbbf24" id="col-yellow" style="background:#fbbf24" title="Yellow"></button>
+        <button class="color-swatch" data-color="#f87171" id="col-red" style="background:#f87171" title="Red"></button>
+        <button class="color-swatch" data-color="#fb923c" id="col-orange" style="background:#fb923c" title="Orange"></button>
+        <button class="color-swatch" data-color="#f472b6" id="col-pink" style="background:#f472b6" title="Pink"></button>
+      </div>
+      <input type="color" id="custom-color" value="#f1f5f9" title="Custom color" style="width:100%;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);cursor:pointer;padding:2px" />
+    </div>
+
+    <div class="tool-group">
+      <div class="tool-label">Stroke</div>
+      <input type="range" id="stroke-size" min="1" max="32" value="4" class="wb-slider" aria-label="Stroke size" />
+      <div style="text-align:center;font-size:0.75rem;color:var(--text-muted)" id="stroke-display">4px</div>
+    </div>
+
+    <div class="tool-group">
+      <div class="tool-label">Fill</div>
+      <div class="tabs" style="flex-direction:column;width:100%">
+        <button class="tab-btn active" data-fill="none" id="fill-none" style="font-size:0.75rem;padding:6px">No Fill</button>
+        <button class="tab-btn" data-fill="fill" id="fill-fill" style="font-size:0.75rem;padding:6px">Fill</button>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <div class="tool-label">Opacity</div>
+      <input type="range" id="opacity-slider" min="10" max="100" value="100" class="wb-slider" aria-label="Opacity" />
+      <div style="text-align:center;font-size:0.75rem;color:var(--text-muted)" id="opacity-display">100%</div>
+    </div>
+
+  </aside>
+
+  <!-- Canvas Area -->
+  <div class="wb-canvas-area" id="wb-canvas-area">
+    <canvas id="whiteboard-canvas" role="img" aria-label="Collaborative whiteboard canvas"></canvas>
+    <!-- Text input overlay -->
+    <textarea id="wb-text-input" class="wb-text-input" placeholder="Type here…" style="display:none"></textarea>
+  </div>
+
+  <!-- Right: Mini map / layers (future) placeholder -->
+  <aside class="wb-right glass">
+    <div class="tool-label" style="padding:12px 14px 8px">Layers</div>
+    <div style="padding:8px;font-size:0.8rem;color:var(--text-muted);text-align:center">
+      All drawings on one layer.<br/>Multi-layer in v2.
+    </div>
+    <div class="tool-label" style="padding:12px 14px 8px">Tips</div>
+    <div class="wb-tips">
+      <div class="wb-tip">Ctrl+Z Undo</div>
+      <div class="wb-tip">Ctrl+Y Redo</div>
+      <div class="wb-tip">Scroll to zoom</div>
+      <div class="wb-tip">Shift+drag = straight line</div>
+    </div>
+  </aside>
+</div>
+
+<script src="js/whiteboard.js"></script>
+</body>
+</html>

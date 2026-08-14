@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Room — LearnSync</title>
+  <meta name="description" content="Collaborative code room with whiteboard and peer editor for LearnSync." />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/editor.css" />
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1" style="opacity:0.03"></div>
+  <div class="orb orb-2" style="opacity:0.03"></div>
+</div>
+
+<!-- ===== TOP NAVBAR ===== -->
+<nav class="editor-navbar" role="navigation" aria-label="Code room navigation">
+
+  <!-- Brand -->
+  <a href="index.html" class="navbar-brand" style="flex-shrink:0; text-decoration:none;">
+    <div class="logo-icon">⚡</div>
+    <span class="gradient-text">LearnSync</span>
+  </a>
+
+  <!-- Room pill -->
+  <div class="room-info-bar" id="room-info-bar">
+    <div class="room-dot" id="room-dot"></div>
+    <span id="room-label">No Room</span>
+    <span class="room-code-badge" id="room-code-display" style="display:none"></span>
+  </div>
+
+  <!-- Language -->
+  <select class="lang-select" id="lang-select" aria-label="Select programming language">
+    <option value="python" selected>🐍 Python</option>
+    <option value="cpp">⚙️ C++</option>
+    <option value="java">☕ Java</option>
+    <option value="javascript">🟨 JavaScript</option>
+    <option value="c">🔵 C</option>
+  </select>
+
+  <!-- Spacer -->
+  <div style="flex:1"></div>
+
+  <!-- Online users (with per-user mute) -->
+  <div class="online-users" id="online-users" aria-label="Users in room">
+    <!-- Self avatar (no mute button) -->
+    <div class="user-bubble" title="You (host)">
+      <div class="avatar avatar-sm" style="background:var(--grad-main)">Y</div>
+    </div>
+  </div>
+
+  <!-- Media controls (Mic & Screen Share) -->
+  <div class="media-controls">
+    <!-- Mic toggle -->
+    <button class="mic-btn" id="mic-btn" data-active="false" title="Toggle microphone">
+      <svg id="mic-icon-on" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+      <svg id="mic-icon-off" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+        <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+      <span class="mic-label" id="mic-label">Mic Off</span>
+    </button>
+
+    <!-- Screen Share toggle -->
+    <button class="mic-btn" id="share-screen-btn" data-active="false" title="Share Screen">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <span class="mic-label" id="screen-label">Share</span>
+    </button>
+  </div>
+
+  <!-- Voice indicator (speaking pulse) -->
+  <div class="voice-indicator" id="voice-indicator" style="display:none" aria-live="polite">
+    <span class="voice-bar"></span><span class="voice-bar"></span><span class="voice-bar"></span>
+  </div>
+
+  <!-- Actions -->
+  <div class="nav-actions">
+    <button class="btn btn-ghost btn-sm" id="hint-ai-btn" title="Get an AI hint">💡 Hint</button>
+    <button class="btn btn-ghost btn-sm" id="chat-toggle-btn" title="Toggle chat (Ctrl+K)" style="position:relative">
+      💬 Chat
+      <span class="chat-unread-badge" id="chat-unread-badge" style="display:none">0</span>
+    </button>
+    <!-- Pre-room buttons -->
+    <button class="btn btn-secondary btn-sm" id="create-room-btn">🔗 Create Room</button>
+    <button class="btn btn-ghost btn-sm" id="join-room-btn">Join</button>
+    <!-- In-room button (shown once in a room) -->
+    <button class="btn btn-ghost btn-sm" id="leave-room-btn" style="display:none;color:#ef4444;border-color:rgba(239,68,68,0.35)" title="Leave room">✕ Leave</button>
+  </div>
+
+</nav>
+
+<!-- ===== 3-PANEL WORKSPACE ===== -->
+<div class="workspace" id="workspace">
+
+  <!-- ── PANEL 1: MY CODE EDITOR ── -->
+  <div class="panel" id="panel-mine" data-panel="mine">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span id="tab-filename">solution.py</span>
+        <span class="owner-tag">You</span>
+      </div>
+      <div class="panel-controls">
+        <!-- Share toggle: what others can do to my editor -->
+        <div class="share-toggle" id="share-toggle" title="Control what others can do with your editor">
+          <button class="share-btn active" data-share="off" id="share-off">🔒 Off</button>
+          <button class="share-btn" data-share="view" id="share-view">👁 View</button>
+          <button class="share-btn" data-share="rw" id="share-rw">✏️ R/W</button>
+        </div>
+        <div class="panel-icon-btns">
+          <button class="icon-btn run-btn" id="run-code-btn" title="Run code (Ctrl+Enter)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span id="run-btn-label">Run</span>
+          </button>
+          <button class="icon-btn" id="copy-mine-btn" title="Copy code">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="icon-btn" id="clear-mine-btn" title="Clear editor">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          </button>
+          <button class="icon-btn expand-btn" id="expand-mine" title="Expand panel" data-target="panel-mine">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button class="icon-btn hide-btn" title="Hide panel" data-target="panel-mine">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="monaco-mine" class="monaco-container"></div>
+    <!-- Output Terminal Drawer -->
+    <div class="output-drawer" id="output-drawer">
+      <div class="output-header">
+        <span class="output-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 10 12 14 16 10"/></svg>
+          Output
+        </span>
+        <span id="output-status" class="output-status"></span>
+        <button class="icon-btn" id="close-output-btn" title="Close output" style="margin-left:auto">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <pre id="output-content" class="output-pre">Press ▶ Run to execute your code.</pre>
+    </div>
+  </div>
+
+  <!-- ── RESIZE DIVIDER 1 ── -->
+  <div class="resizer" id="resizer-1" aria-hidden="true"></div>
+
+  <!-- ── PANEL 2: WHITEBOARD ── -->
+  <div class="panel" id="panel-wb" data-panel="wb">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Whiteboard</span>
+        <span class="wb-mode-badge badge" id="wb-mode-badge">Public · R/W</span>
+      </div>
+      <div class="panel-controls">
+        <!-- Whiteboard mode (creator-only control, shown as toggle) -->
+        <div class="wb-mode-toggle" id="wb-mode-toggle" title="Set whiteboard access mode">
+          <button class="wb-mode-btn active" data-wbmode="rw" id="wbmode-rw">R/W</button>
+          <button class="wb-mode-btn" data-wbmode="ro" id="wbmode-ro">Read-only</button>
+        </div>
+
+        <div class="panel-icon-btns">
+          <button class="icon-btn expand-btn" id="expand-wb" title="Expand panel" data-target="panel-wb">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button class="icon-btn hide-btn" title="Hide panel" data-target="panel-wb">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="wb-canvas-wrap" id="wb-canvas-wrap">
+      <div class="wb-floating-toolbar" id="wb-floating-toolbar">
+         <button class="icon-btn active toggle-tools-btn" id="wb-tools-toggle" title="Toggle Tools">✏️</button>
+         <div class="wb-tools vertical-tools" id="wb-tools" style="display:none;">
+            <button class="icon-btn wb-tool-btn active" data-tool="pen" title="Pen">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5l4 4L7 21l-4 1 1-4 12.5-12.5z"/></svg>
+            </button>
+            <button class="icon-btn wb-tool-btn" data-tool="eraser" title="Eraser">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16l10-10 7 7"/><path d="M6.26 6.26L20 20"/></svg>
+            </button>
+            <button class="icon-btn wb-tool-btn" data-tool="rect" title="Rectangle">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </button>
+            <button class="icon-btn wb-tool-btn" data-tool="circle" title="Circle">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+            </button>
+            <button class="icon-btn wb-tool-btn" data-tool="arrow" title="Arrow">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="13 5 19 5 19 11"/></svg>
+            </button>
+            <button class="icon-btn wb-tool-btn" data-tool="text" title="Text">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+            </button>
+            <div class="tool-sep-v"></div>
+            <div class="wb-colors" id="wb-colors">
+              <button class="color-swatch active" data-color="#a78bfa" style="background:#a78bfa;" title="Purple"></button>
+              <button class="color-swatch" data-color="#ef4444" style="background:#ef4444;" title="Red"></button>
+              <button class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;" title="Blue"></button>
+              <button class="color-swatch" data-color="#10b981" style="background:#10b981;" title="Green"></button>
+              <button class="color-swatch" data-color="#eab308" style="background:#eab308;" title="Yellow"></button>
+              <button class="color-swatch" data-color="#f97316" style="background:#f97316;" title="Orange"></button>
+              <button class="color-swatch" data-color="#f8fafc" style="background:#f8fafc;" title="White"></button>
+              <button class="color-swatch" data-color="#111218" style="background:#111218;" title="Black"></button>
+            </div>
+            <div class="tool-sep-v"></div>
+            <input type="range" id="wb-size" min="1" max="20" value="3" title="Brush/Eraser Size" class="wb-size-slider" />
+            <div class="tool-sep-v"></div>
+            <button class="icon-btn" id="wb-undo" title="Undo">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+            </button>
+            <button class="icon-btn" id="wb-clear" title="Clear whiteboard">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+            <button class="icon-btn" id="wb-export" title="Export as PNG">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+         </div>
+      </div>
+      <canvas id="wb-canvas" class="wb-canvas"></canvas>
+      <textarea id="wb-text-input" class="wb-text-input" style="display:none" placeholder="Type…"></textarea>
+      <!-- Read-only overlay -->
+      <div class="wb-readonly-overlay" id="wb-readonly-overlay" style="display:none">
+        <div class="wb-readonly-msg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          View only — creator has locked the whiteboard
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESIZE DIVIDER 2 ── -->
+  <div class="resizer" id="resizer-2" aria-hidden="true"></div>
+
+  <!-- ── PANEL 3: PEER'S EDITOR ── -->
+  <div class="panel" id="panel-peer" data-panel="peer">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Peer's Editor</span>
+        <span class="peer-perm-badge badge" id="peer-perm-badge">View only</span>
+      </div>
+      <div class="panel-controls">
+        <!-- Peer selector -->
+        <select class="peer-select" id="peer-select" aria-label="Select peer to view">
+          <option value="">— Select peer —</option>
+        </select>
+        <!-- Speaker/mute button — injected by JS when peer has mic active -->
+        <button id="peer-speaker-btn" title="Mute/unmute this peer" style="display:none"></button>
+        <div class="panel-icon-btns">
+          <button class="icon-btn expand-btn" id="expand-peer" title="Expand panel" data-target="panel-peer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button class="icon-btn hide-btn" title="Hide panel" data-target="panel-peer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Empty state -->
+    <div class="peer-empty" id="peer-empty">
+      <div class="peer-empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <p class="peer-empty-text">Select a peer from the dropdown above to view their editor</p>
+    </div>
+    <!-- Not sharing state -->
+    <div class="peer-not-sharing" id="peer-not-sharing" style="display:none">
+      <div class="peer-empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <p class="peer-empty-text" id="peer-not-sharing-name">This peer isn't sharing their editor</p>
+    </div>
+    <!-- Monaco peer editor -->
+    <div id="monaco-peer" class="monaco-container" style="display:none"></div>
+  </div>
+
+</div><!-- /workspace -->
+
+<!-- ===== SHOW ALL RESTORE BUTTON ===== -->
+<button class="show-all-btn" id="show-all-btn" style="display:none" title="Restore all panels">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+  Show All Panels
+</button>
+
+<!-- ===== FLOATING SCREEN SHARE CONTAINER ===== -->
+<div class="remote-screen-container" id="remote-screen-container" style="display:none">
+  <div class="remote-screen-header">
+    <span class="remote-screen-title" id="remote-screen-title">Peer's Screen</span>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-ghost btn-sm" id="popout-remote-screen" title="Pop out (Picture-in-Picture)">↗️</button>
+      <button class="btn btn-ghost btn-sm" id="close-remote-screen">✕</button>
+    </div>
+  </div>
+  <video id="remote-screen-video" autoplay playsinline></video>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Create Room -->
+<div class="modal-overlay" id="create-modal" role="dialog" aria-labelledby="create-modal-title" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="create-modal-title">🔗 Create Code Room</h3>
+      <button class="btn btn-ghost btn-sm" id="close-create-modal" aria-label="Close">✕</button>
+    </div>
+    <div class="flex-col gap-md">
+      <div class="form-group">
+        <label class="form-label" for="new-room-name">Room Name</label>
+        <input type="text" id="new-room-name" class="form-input" placeholder="DSA Practice Session" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Privacy</label>
+        <div class="tabs">
+          <button class="tab-btn active" data-privacy="private">🔒 Private</button>
+          <button class="tab-btn" data-privacy="public">🌐 Public</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="confirm-create-btn">Create Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- Join Room -->
+<div class="modal-overlay" id="join-modal" role="dialog" aria-labelledby="join-modal-title" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="join-modal-title">Join Code Room</h3>
+      <button class="btn btn-ghost btn-sm" id="close-join-modal" aria-label="Close">✕</button>
+    </div>
+    <div class="flex-col gap-md">
+      <div class="form-group">
+        <label class="form-label" for="join-code-input">Room Code</label>
+        <input type="text" id="join-code-input" class="form-input" placeholder="e.g. ABCD1234" maxlength="8"
+               style="text-transform:uppercase;font-family:var(--font-mono);letter-spacing:0.12em" />
+      </div>
+      <button class="btn btn-primary" id="confirm-join-btn">Join Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Hint -->
+<div class="modal-overlay" id="ai-hint-modal" role="dialog" aria-labelledby="ai-hint-title" aria-modal="true">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h3 id="ai-hint-title">💡 AI Hint</h3>
+      <button class="btn btn-ghost btn-sm" id="close-hint-modal" aria-label="Close">✕</button>
+    </div>
+    <div id="ai-hint-content" class="flex-col gap-md">
+      <div class="loading-state" style="min-height:90px;display:flex;align-items:center;justify-content:center;gap:12px">
+        <div class="spinner"></div>
+        <p style="color:var(--text-muted);font-size:.875rem">AI is analysing your code…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- In-room Chat Panel -->
+<div class="chat-panel" id="chat-panel" aria-label="In-room chat" role="complementary">
+  <div class="chat-header">
+    <span style="font-weight:600;font-size:0.875rem">💬 Room Chat</span>
+    <button class="icon-btn" id="close-chat-btn" title="Close chat" aria-label="Close chat">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="chat-messages" id="chat-messages" role="log" aria-live="polite"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" class="chat-input" placeholder="Message…" maxlength="500" autocomplete="off" />
+    <button class="icon-btn chat-send-btn" id="chat-send-btn" title="Send (Enter)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Hidden remote audio container — audio elements attached here by JS -->
+<div id="remote-audio-container" style="display:none" aria-hidden="true"></div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+<!-- Socket.io and Monaco loader -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>

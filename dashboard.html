@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SyncSpace</title>
+  <meta name="description" content="Your SyncSpace collaboration dashboard." />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+</head>
+<body>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar" role="navigation">
+  <a href="index.html" class="navbar-brand">
+    <div class="logo-icon">⚡</div>
+    <span class="gradient-text">SyncSpace</span>
+  </a>
+  <div class="navbar-nav">
+    <a href="editor.html" class="navbar-link" id="nav-editor">Code Room</a>
+    <a href="whiteboard.html" class="navbar-link" id="nav-whiteboard">Whiteboard</a>
+    <div class="user-menu" id="user-menu">
+      <div class="avatar" id="user-avatar">U</div>
+      <span id="user-name-nav" style="font-size:0.875rem;font-weight:500"></span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="logout-btn">Logout</button>
+  </div>
+</nav>
+
+<!-- Sidebar -->
+<aside class="sidebar" role="navigation" aria-label="Sidebar">
+  <div class="sidebar-section-label">Menu</div>
+  <a href="dashboard.html" class="sidebar-item active" id="sb-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <a href="editor.html" class="sidebar-item" id="sb-editor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    Code Room
+  </a>
+  <a href="whiteboard.html" class="sidebar-item" id="sb-whiteboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    Whiteboard
+  </a>
+</aside>
+
+<!-- Main Content -->
+<div class="page-with-sidebar">
+  <div class="page-content" id="main-content">
+
+    <!-- Greeting -->
+    <div class="dash-greeting animate-fadeup">
+      <div>
+        <h1>Good <span id="time-of-day">Morning</span>, <span id="greeting-name" class="gradient-text">Collaborator</span> 👋</h1>
+        <p>Ready to build something great together?</p>
+      </div>
+      <div class="streak-badge">
+        <span class="streak-fire">⚡</span>
+        <div>
+          <div class="streak-num" id="streak-count">Live</div>
+          <div class="streak-label">sync ready</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats (real data from DB) -->
+    <div class="stats-row animate-fadeup delay-1">
+      <div class="stat-card" id="stat-rooms">
+        <div class="stat-icon" style="background:rgba(59,130,246,0.15);color:#93c5fd">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-rooms-count">—</div>
+          <div class="stat-key">Your Rooms</div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-collab">
+        <div class="stat-icon" style="background:rgba(139,92,246,0.15);color:#a78bfa">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-active-count">—</div>
+          <div class="stat-key">Active Now</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="dash-grid">
+      <!-- Left: Quick Actions -->
+      <div class="dash-left">
+        <div class="section-block animate-fadeup delay-2">
+          <h2 class="block-title">Quick Start</h2>
+          <div class="quick-actions">
+            <a href="editor.html" class="quick-action-card" id="qa-room" style="--accent:#3b82f6">
+              <div class="qa-icon">💻</div>
+              <div class="qa-label">Create Code Room</div>
+              <div class="qa-sub">Invite friends &amp; code together</div>
+              <svg class="qa-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a href="whiteboard.html" class="quick-action-card" id="qa-whiteboard" style="--accent:#06b6d4">
+              <div class="qa-icon">✏️</div>
+              <div class="qa-label">Open Whiteboard</div>
+              <div class="qa-sub">Draw &amp; explain ideas live</div>
+              <svg class="qa-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a href="editor.html" class="quick-action-card" id="qa-join" style="--accent:#8b5cf6">
+              <div class="qa-icon">🔗</div>
+              <div class="qa-label">Join a Room</div>
+              <div class="qa-sub">Enter a room code to join</div>
+              <svg class="qa-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Features highlight -->
+        <div class="section-block animate-fadeup delay-3">
+          <h2 class="block-title">What's in a Room</h2>
+          <div class="progress-list">
+            <div class="progress-item">
+              <div class="flex justify-between items-center" style="margin-bottom:6px">
+                <span style="font-size:0.875rem;font-weight:500">💻 Monaco Code Editor</span>
+                <span class="badge badge-blue">5 langs</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:100%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="flex justify-between items-center" style="margin-bottom:6px">
+                <span style="font-size:0.875rem;font-weight:500">🎨 Shared Whiteboard</span>
+                <span class="badge badge-green">Live sync</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:100%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="flex justify-between items-center" style="margin-bottom:6px">
+                <span style="font-size:0.875rem;font-weight:500">🎤 Voice Chat</span>
+                <span class="badge badge-purple">WebRTC</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:100%"></div></div>
+            </div>
+            <div class="progress-item">
+              <div class="flex justify-between items-center" style="margin-bottom:6px">
+                <span style="font-size:0.875rem;font-weight:500">🖥️ Screen Sharing</span>
+                <span class="badge badge-yellow">PiP mode</span>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:100%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Active Rooms -->
+      <div class="dash-right">
+        <!-- Your Rooms -->
+        <div class="section-block animate-fadeup delay-2">
+          <div class="flex justify-between items-center" style="margin-bottom:var(--space-md)">
+            <h2 class="block-title" style="margin-bottom:0">Your Rooms</h2>
+            <a href="editor.html" class="btn btn-primary btn-sm" id="create-room-btn">+ New Room</a>
+          </div>
+          <!-- Rooms rendered by dashboard.js -->
+          <div class="rooms-list" id="rooms-list">
+            <div class="room-empty" id="rooms-loading">
+              <span style="color:var(--text-muted);font-size:0.875rem">Loading rooms…</span>
+            </div>
+          </div>
+          <!-- Join by code always visible -->
+          <div class="room-empty" id="join-room-box" style="margin-top:12px">
+            <span style="color:var(--text-muted);font-size:0.875rem">Have a room code?</span>
+            <div class="join-room-row">
+              <input type="text" id="room-code-input" class="form-input" placeholder="Enter room code" style="flex:1;padding:9px 14px" maxlength="8" />
+              <button class="btn btn-primary btn-sm" id="join-room-btn">Join</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
