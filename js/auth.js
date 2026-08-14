@@ -2,6 +2,9 @@
    Auth JS — Login & Register
    =========================== */
 
+// ── Backend base URL (Render deployment) ──
+const API_BASE = 'https://learnsync-9nyy.onrender.com';
+
 // ---- Utility ----
 function showError(id, msg) {
   const el = document.getElementById(id);
@@ -102,8 +105,9 @@ if (loginForm) {
     setLoading('login-submit-btn', 'login-spinner', 'login-btn-text', true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -169,8 +173,9 @@ if (registerForm) {
     setLoading('register-submit-btn', 'register-spinner', 'register-btn-text', true);
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -200,8 +205,9 @@ if (registerForm) {
   if (el) {
     el.addEventListener('click', async () => {
       try {
-        const response = await fetch('/api/auth/demo', {
-          method: 'POST'
+        const response = await fetch(`${API_BASE}/api/auth/demo`, {
+          method: 'POST',
+          credentials: 'include'
         });
         const data = await response.json();
         if (!response.ok) {

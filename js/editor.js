@@ -2,6 +2,9 @@
    LearnSync — Code Room JS (Redesigned 3-Panel)
    ============================================================ */
 
+// ── Backend base URL (Render deployment) ──
+const API_BASE = 'https://learnsync-9nyy.onrender.com';
+
 // ── Starter code per language ──
 const STARTER = {
   python:     `# Start coding here\ndef solution():\n    pass\n`,
@@ -649,8 +652,9 @@ document.getElementById('confirm-create-btn').addEventListener('click', async ()
   btn.disabled = true;
   btn.textContent = 'Creating…';
   try {
-    const res = await fetch('/api/rooms/create', {
+    const res = await fetch(`${API_BASE}/api/rooms/create`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, language: lang }),
     });
@@ -675,7 +679,7 @@ document.getElementById('confirm-join-btn').addEventListener('click', async () =
   btn.disabled = true;
   btn.textContent = 'Joining…';
   try {
-    const res = await fetch(`/api/rooms/${code}`);
+    const res = await fetch(`${API_BASE}/api/rooms/${code}`, { credentials: 'include' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Room not found');
     isCreator = false;
@@ -694,7 +698,7 @@ document.getElementById('confirm-join-btn').addEventListener('click', async () =
 const urlRoom = new URLSearchParams(location.search).get('room');
 if (urlRoom) {
   // Attempt to lookup from DB; fall back gracefully
-  fetch(`/api/rooms/${urlRoom}`)
+  fetch(`${API_BASE}/api/rooms/${urlRoom}`, { credentials: 'include' })
     .then(r => r.json())
     .then(data => {
       const roomName = data?.room?.name || 'Joined Room';
@@ -782,8 +786,9 @@ async function runCode() {
   runBtnLabel.textContent = 'Running…';
 
   try {
-    const res = await fetch('/api/execute', {
+    const res = await fetch(`${API_BASE}/api/execute`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, language: lang }),
     });
@@ -1198,7 +1203,7 @@ async function fetchRtcConfig() {
   }
 
   try {
-    const resp = await fetch('/api/rtc-credentials', {
+    const resp = await fetch(`${API_BASE}/api/rtc-credentials`, {
       // Credentials: 'include' ensures the httpOnly JWT cookie is sent,
       // so requireAuthAPI on the server can verify the user's session.
       credentials: 'include'
@@ -1232,7 +1237,7 @@ const screenLabel = document.getElementById('screen-label');
 
 // Initialize Socket.io connection (if backend is running)
 try {
-  socket = io();
+  socket = io('https://learnsync-9nyy.onrender.com');
   
   socket.on('connect', () => {
     console.log('Connected to signaling server:', socket.id);

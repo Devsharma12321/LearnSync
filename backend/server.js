@@ -12,10 +12,41 @@ const Room = require('./models/Room');
 
 const app = express();
 const server = http.createServer(app);
+
+// ============================================================
+// CORS — allow Netlify frontend + local dev with credentials
+// ============================================================
+const ALLOWED_ORIGINS = [
+  'https://learnsync-9nyy.onrender.com',   // Render (self)
+  'http://localhost:3000',                  // local dev
+  'http://127.0.0.1:3000',
+  // TODO: Replace with your actual Netlify URL after deploy
+  // e.g. 'https://learnsync.netlify.app'
+];
+// Accept any *.netlify.app subdomain automatically
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || /\.netlify\.app$/.test(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: (origin, cb) => {
+            if (!origin || ALLOWED_ORIGINS.includes(origin) || /\.netlify\.app$/.test(origin)) {
+                cb(null, true);
+            } else {
+                cb(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 

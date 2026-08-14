@@ -1,3 +1,6 @@
+// ── Backend base URL (Render deployment) ──
+const API_BASE = 'https://learnsync-9nyy.onrender.com';
+
 // Dashboard JS — real data only
 document.addEventListener('DOMContentLoaded', async () => {
   // ── 1. Load user from storage for fast render, then verify with server ──
@@ -15,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 2. Verify session and sync with server ──
   try {
-    const res = await fetch('/api/auth/me');
+    const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
     if (!res.ok) {
       sessionStorage.removeItem('ls_user');
       window.location.href = 'login.html';
@@ -39,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── 4. Logout ──
   document.getElementById('logout-btn')?.addEventListener('click', async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+    try { await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }); } catch (e) {}
     sessionStorage.removeItem('ls_user');
     window.location.href = 'login.html';
   });
@@ -69,7 +72,7 @@ async function loadRooms() {
   const activeCount = document.getElementById('stat-active-count');
 
   try {
-    const res  = await fetch('/api/rooms/mine');
+    const res  = await fetch(`${API_BASE}/api/rooms/mine`, { credentials: 'include' });
     const data = await res.json();
 
     if (!res.ok) throw new Error(data.error || 'Failed to load rooms');
