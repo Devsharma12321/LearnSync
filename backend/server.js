@@ -151,7 +151,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
             { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
             process.env.JWT_SECRET, { expiresIn: '1d' }
         );
-        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 86400000 });
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 86400000 });
         res.status(201).json({ success: true, user: { firstName: user.firstName, lastName: user.lastName, email: user.email } });
     } catch (err) {
         console.error('Registration error:', err);
@@ -171,7 +171,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
             { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
             process.env.JWT_SECRET, { expiresIn: '1d' }
         );
-        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 86400000 });
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 86400000 });
         res.status(200).json({ success: true, user: { firstName: user.firstName, lastName: user.lastName, email: user.email } });
     } catch (err) {
         console.error('Login error:', err);
@@ -190,7 +190,7 @@ app.post('/api/auth/demo', async (req, res) => {
             { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName },
             process.env.JWT_SECRET, { expiresIn: '1d' }
         );
-        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 86400000 });
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 86400000 });
         res.status(200).json({ success: true, user: { firstName: user.firstName, lastName: user.lastName, email: user.email } });
     } catch (err) {
         console.error('Demo login error:', err);
@@ -272,7 +272,24 @@ app.get('/api/rooms/mine', requireAuthAPI, async (req, res) => {
     }
 });
 
-// GET /api/rooms/:code â€” get room info by code
+// DELETE /api/rooms/:code — creator can delete their own room immediately
+app.delete('/api/rooms/:code', requireAuthAPI, async (req, res) => {
+    try {
+        const code = req.params.code.toUpperCase();
+        const room = await Room.findOne({ code });
+        if (!room) return res.status(404).json({ error: 'Room not found.' });
+        if (String(room.creatorId) !== String(req.user.id))
+            return res.status(403).json({ error: 'Only the room creator can delete this room.' });
+        await Room.deleteOne({ code });
+        console.log(`Room ${code} deleted by creator ${req.user.email}`);
+        res.status(200).json({ success: true, message: 'Room deleted.' });
+    } catch (err) {
+        console.error('Room delete error:', err);
+        res.status(500).json({ error: 'Failed to delete room.' });
+    }
+});
+
+// GET /api/rooms/:code — get room info by code
 app.get('/api/rooms/:code', requireAuthAPI, async (req, res) => {
     try {
         const room = await Room.findOne({ code: req.params.code.toUpperCase() });
@@ -476,22 +493,17 @@ io.use((socket, next) => {
     }
 });
 
-// â”€â”€ Room session timers (roomCode -> setTimeout handle) â”€â”€
-// When the last person leaves a room, we start a 5-min timer.
-// If someone rejoins, we cancel the timer.
-const roomExpiryTimers = {};
-const ROOM_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
-
 // Track which room each socket is in (socketId -> roomCode)
 const socketRoomMap = {};
 
+// 24-hour TTL: when the last member leaves, set expiresAt = now + 24h.
+// MongoDB's TTL index ({expiresAt:1}, expireAfterSeconds:0) will then
+// automatically delete the document after that time.
+// We do this in the DB (no in-memory timer) so it survives Render free-tier spin-downs.
+const ROOM_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
 async function onMemberJoin(roomCode, userId) {
-    // Cancel any pending expiry timer for this room
-    if (roomExpiryTimers[roomCode]) {
-        clearTimeout(roomExpiryTimers[roomCode]);
-        delete roomExpiryTimers[roomCode];
-    }
-    // Increment activeMembers, clear expiresAt, update lastActiveAt, add member
+    // Someone rejoined — clear the expiry so the room stays alive.
     await Room.findOneAndUpdate(
         { code: roomCode },
         {
@@ -511,21 +523,14 @@ async function onMemberLeave(roomCode) {
     if (!room) return;
 
     if (room.activeMembers <= 0) {
-        // Last person left â€” start the 5-min expiry countdown
-        const timer = setTimeout(async () => {
-            try {
-                await Room.findOneAndUpdate(
-                    { code: roomCode },
-                    { $set: { expiresAt: new Date() } }
-                );
-                console.log(`Room ${roomCode} marked as expired (15-min timeout).`);
-            } catch (e) {
-                console.error('Room expiry error:', e);
-            }
-            delete roomExpiryTimers[roomCode];
-        }, ROOM_EXPIRY_MS);
-        roomExpiryTimers[roomCode] = timer;
-        console.log(`Room ${roomCode} empty — will expire in 15 minutes if nobody rejoins.`);
+        // Last person left — schedule deletion 24h from now via MongoDB TTL.
+        // This is persisted in the DB, so it survives server restarts/sleep.
+        const expiresAt = new Date(Date.now() + ROOM_TTL_MS);
+        await Room.findOneAndUpdate(
+            { code: roomCode },
+            { $set: { expiresAt } }
+        );
+        console.log(`Room ${roomCode} empty — will be deleted at ${expiresAt.toISOString()} (24h TTL).`);
     }
 }
 
